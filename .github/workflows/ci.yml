@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PAGES_ARTIFACT_NAME: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+
 jobs:
   native:
     runs-on: ubuntu-latest
@@ -47,7 +50,7 @@ jobs:
           node tests/wasm-smoke.mjs build-wasm/dist
 
       - name: Upload WASM bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wasm-dist
           path: build-wasm/dist
@@ -64,16 +67,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Download WASM bundle
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: wasm-dist
           path: github-pages
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
+          name: ${{ env.PAGES_ARTIFACT_NAME }}
           path: github-pages
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+        with:
+          artifact_name: ${{ env.PAGES_ARTIFACT_NAME }}

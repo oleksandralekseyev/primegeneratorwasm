@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure native build
+        run: cmake -S . -B build-native -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build native target
+        run: cmake --build build-native --parallel
+
+      - name: Run native smoke test
+        run: ctest --test-dir build-native --output-on-failure
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Emscripten SDK
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          cd "$RUNNER_TEMP/emsdk"
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      - name: Build WASM target
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-wasm --parallel
+
+      - name: Run WASM smoke test
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          node tests/wasm-smoke.mjs build-wasm/dist
+
+      - name: Upload WASM bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-dist
+          path: build-wasm/dist
+
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: wasm
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download WASM bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-dist
+          path: github-pages
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: github-pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

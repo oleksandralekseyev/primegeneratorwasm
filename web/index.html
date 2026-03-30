@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prime Generator</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <h1>WASM Prime Generator</h1>
+
+        <form data-form class="controls">
+          <label>
+            <span>Upper limit (exclusive)</span>
+            <input data-limit type="number" min="0" step="1" value="1000000">
+          </label>
+          <div class="actions">
+            <button data-run type="submit">Generate</button>
+          </div>
+        </form>
+
+        <div class="status-grid">
+          <div>
+            <div class="label">Status</div>
+            <div data-status class="value">loading</div>
+          </div>
+          <div>
+            <div class="label">Prime count</div>
+            <div data-prime-count class="value">0</div>
+          </div>
+          <div>
+            <div class="label">Last prime</div>
+            <div data-last-prime class="value">0</div>
+          </div>
+        </div>
+
+        <div class="progress-block">
+          <progress data-progress-bar max="100" value="0"></progress>
+          <div data-progress-text class="progress-text">0.0%</div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
